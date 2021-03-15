@@ -54,6 +54,13 @@ optionsDef = {
         "default": False,
         "help": 'For Saving the current Model'
     },
+    "--load-nn": {
+        "type": str,
+        "metavar": 'STR',
+        "default": None,
+        "help": 'dataset path',
+        "choices": ['last', 'acc', 'loss']
+    },
 }
 
 def runner(description, options):
