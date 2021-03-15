@@ -4,7 +4,8 @@ import math
 from pathlib import Path
 import os
 class State():
-    def __init__(self, path: str, name: str, model: nn.Module, optimizer: torch.optim.Optimizer):
+    def __init__(self, path: str, name: str, model: nn.Module, optimizer: torch.optim.Optimizer, args):
+        self.args = args
         self.model = model
         self.optimizer = optimizer
         self.history_train = self._create_empty_buffer()
@@ -78,7 +79,9 @@ class State():
 
         return self
 
-    def load_net(self, choice: str):
+    def load_net(self):
+        choice = self.args.load_nn
+
         if not choice:
             return
 
@@ -105,6 +108,12 @@ class State():
         self.epoch = data["epoch"]
         self.model.load_state_dict(data["model"])
         self.optimizer.load_state_dict(data["optimizer"])
+
+        print('self.args.force_lr', self.args.force_lr)
+
+        if self.args.force_lr:
+            for g in self.optimizer.param_groups:
+                g['lr'] = self.args.lr
 
         print(f'Loaded epoch: {self.epoch}, loss: {data["loss"]}, acc: {data["acc"]}')
 

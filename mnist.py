@@ -21,6 +21,7 @@ options = {
     "--gamma": 0.07,
     "--data": None,
     "--load-nn": None,
+    "--force-lr": None,
 }
 
 class Net(nn.Module):
@@ -71,9 +72,9 @@ def main():
     # optimizer = optim.SGD(model.parameters(), lr=args.lr)
     scheduler = StepLR(optimizer, step_size=1, gamma=args.gamma)
 
-    state = State('save', 'MNIST_conv', model, optimizer)
+    state = State('save', 'MNIST_conv', model, optimizer, args)
+    state.load_net()
 
-    state.load_net(args.load_nn)
     current_epoch = state.epoch
 
     def train(train: bool, data, target, data_len):
@@ -125,65 +126,6 @@ def main():
         if batch_idx % args.log_interval == 0:
             state.log_last_train(data_len, len(train_loader.dataset), correct)
     test(epoch)
-
-    #     model.train(True)
-    #     output = model(data)
-    #     optimizer.zero_grad()
-    #     loss = F.nll_loss(output, target)
-    #     loss.backward()
-    #     optimizer.step()
-    #     log(epoch, batch_idx, args.log_interval, train_loader, data, loss)
-    #     if epoch != 0 and batch_idx == 0:
-
-    #         scheduler.step()
-
-    #         for param_group in optimizer.param_groups:
-    #             print(param_group["lr"])
-    #         print('-' * 42)
-    #         print(model.conv1.weight.grad.mean())
-    #         print(model.conv2.weight.grad.mean())
-    #         print(model.fc1.weight.grad.mean())
-    #         print(model.fc2.weight.grad.mean())
-
-    #         print('-' * 42)
-
-    #         print(model.conv1.weight.data.mean())
-    #         print(model.conv2.weight.data.mean())
-    #         print(model.fc1.weight.data.mean())
-    #         print(model.fc2.weight.data.mean())
-
-    #         model.train(False)
-    #         test_loss = 0
-    #         correct = 0
-    #         for epoch, batch_idx, data, target in run_loop(1, test_loader, device):
-    #             output = model(data)
-    #             # sum up batch loss
-    #             test_loss += F.nll_loss(output, target, reduction='sum').item()
-    #             # get the index of the max log-probability
-    #             pred = output.argmax(dim=1, keepdim=True)
-    #             correct += pred.eq(target.view_as(pred)).sum().item()
-
-    #         test_loss /= len(test_loader.dataset)
-
-    #         print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
-    #             test_loss, correct, len(test_loader.dataset),
-    #             100. * correct / len(test_loader.dataset)))
-    # model.train(False)
-    # test_loss = 0
-    # correct = 0
-    # for epoch, batch_idx, data, target in run_loop(1, test_loader, device):
-    #     output = model(data)
-    #     # sum up batch loss
-    #     test_loss += F.nll_loss(output, target, reduction='sum').item()
-    #     # get the index of the max log-probability
-    #     pred = output.argmax(dim=1, keepdim=True)
-    #     correct += pred.eq(target.view_as(pred)).sum().item()
-
-    # test_loss /= len(test_loader.dataset)
-
-    # print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
-    #     test_loss, correct, len(test_loader.dataset),
-    #     100. * correct / len(test_loader.dataset)))
 
 
 if __name__ == '__main__':

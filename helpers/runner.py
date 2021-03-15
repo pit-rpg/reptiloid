@@ -20,6 +20,10 @@ optionsDef = {
         "metavar": 'LR',
         "help": 'learning rate (default: 1.0)'
     },
+    "--force-lr": {
+        "default": None,
+        "help": 'force learning rate'
+    },
     "--gamma": {
         "type": float,
         "default": 0.7,
