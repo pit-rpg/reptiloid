@@ -1,5 +1,6 @@
 import argparse
 import torch
+import multiprocessing
 
 optionsDef = {
     "--batch-size": {
@@ -63,8 +64,27 @@ optionsDef = {
         "metavar": 'STR',
         "default": None,
         "help": 'dataset path',
-        "choices": ['last', 'acc', 'loss']
+        "choices": ['last', 'acc', 'loss', None]
     },
+    "--skip-train": {
+        "type": bool,
+        "metavar": 'bool',
+        "default": False,
+        "help": 'skip train',
+    },
+    "--skip-test": {
+        "type": bool,
+        "metavar": 'bool',
+        "default": False,
+        "help": 'skip train',
+    },
+    "--infographics": {
+        "type": bool,
+        "metavar": 'bool',
+        "default": False,
+        "help": 'skip train',
+    },
+
 }
 
 def runner(description, options):
@@ -76,7 +96,7 @@ def runner(description, options):
     torch.manual_seed(args.seed)
 
     if use_cuda:
-        kwargs.update({'num_workers': 1,
+        kwargs.update({'num_workers': multiprocessing.cpu_count(),
                        'pin_memory': True,
                        'shuffle': True})
 
@@ -95,14 +115,16 @@ def printInfo(args, device):
     print('-'*42)
 
 
-def getArgs(description: str = "Neural Network", options={}):
+def getArgs(description: str = "Neural Network", defaults={}):
     parser = argparse.ArgumentParser(description=description)
 
-    for key, val in options.items():
+    for key, val in defaults.items():
         if key not in optionsDef:
             raise Exception('wrong option')
-        optionsDef[key].update({"default": val or optionsDef[key]["default"]})
+        optionsDef[key].update({"default": val})
         print(key, optionsDef[key])
+
+    for key, val in optionsDef.items():
         parser.add_argument(key, **optionsDef[key])
 
     return parser.parse_args()

@@ -4,24 +4,24 @@ from helpers.runner import runner
 from helpers.loop import run_loop
 from helpers.save_load import State
 from torch.optim.lr_scheduler import StepLR
+from torchvision.utils import save_image
+from pathlib import Path
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torchvision import datasets, transforms
+from pathlib import Path
 
 options = {
     "--lr": 1.0,
     "--no-cuda": False,
-    "--batch-size": 300,
+    "--batch-size": 42,
     "--epochs": 21,
     "--log-interval": 10,
     "--seed": 42,
     "--gamma": 0.07,
-    "--data": None,
-    "--load-nn": None,
-    "--force-lr": None,
 }
 
 class Net(nn.Module):
@@ -53,12 +53,30 @@ def get_lr(optimizer):
     for param_group in optimizer.param_groups:
         return param_group['lr']
 
+def infographics(args, model: Net):
+    if not args.infographics:
+        return
+    Path('tmp').mkdir(parents=True, exist_ok=True)
+    print('='*42)
+    weight = model.conv1.cpu().weight
+    print(weight.data.shape)
+    data = weight.data[:, 0]
+    # data = weight.data[:, 0][2:]
+    # data = data.view(-1, 3, 3, 3)
+    print(data.shape)
+    # print(x[0])
+    for i, layer in enumerate(data):
+        # print(i, layer.shape)
+        save_image(layer, f'tmp/feature{i}.png')
+        # print(i, model.conv1.weight.data[i:0].numpy())
+
+
 def main():
     args, kwargs, device, = runner("MNIST Test", options)
 
     transform = transforms.Compose([
         transforms.ToTensor(),
-        transforms.Normalize((0.1307,), (0.3081,))
+        # transforms.Normalize((0.1307,), (0.3081,))
     ])
 
     dataset1 = datasets.MNIST('../data', train=True, download=True, transform=transform)
@@ -76,6 +94,11 @@ def main():
     state.load_net()
 
     current_epoch = state.epoch
+
+    infographics(args, model)
+
+    if args.skip_train:
+        return
 
     def train(train: bool, data, target, data_len):
         optimizer.zero_grad()
@@ -98,6 +121,8 @@ def main():
             return loss.item(), acc, correct
 
     def test(epoch):
+        if args.skip_train:
+            return
         loss, _, correct = 0, 0, 0
         data_len = len(test_loader.dataset)
         lr = get_lr(optimizer)

@@ -3,6 +3,8 @@ import torch.nn as nn
 import math
 from pathlib import Path
 import os
+from random import randint
+
 class State():
     def __init__(self, path: str, name: str, model: nn.Module, optimizer: torch.optim.Optimizer, args):
         self.args = args
@@ -60,7 +62,7 @@ class State():
         last_loss = self.history_test['loss'][-1]
         last_acc = self.history_test['accuracy'][-1]
         data = {
-            "epoch": self.epoch,
+            "epoch": self.epoch + 1,
             "model": self.model.state_dict(),
             "loss": last_loss,
             "acc": last_acc,
@@ -79,6 +81,24 @@ class State():
 
         return self
 
+    def save_last(self, terminate_pr=False):
+        last_loss = self.history_train['loss'][-1]
+        last_acc = self.history_train['accuracy'][-1]
+        data = {
+            "epoch": self.epoch + 1,
+            "model": self.model.state_dict(),
+            "loss": last_loss,
+            "acc": last_acc,
+            "optimizer": self.optimizer.state_dict(),
+        }
+
+        torch.save(data, self.path_last)
+        torch.save(data, f'{self.path_last}_{last_loss}_{randint(0, 10000000000000000)}')
+        print('\nSave latest!\n')
+        if terminate_pr:
+            exit(0)
+        return self
+
     def load_net(self):
         choice = self.args.load_nn
 
@@ -89,11 +109,16 @@ class State():
             raise Exception('cant load')
 
         data = None
+
+        if os.path.exists(self.path_acc):
+            data_acc = torch.load(self.path_acc)
+            self.best_train_acc = data_acc["acc"]
+
+        if os.path.exists(self.path_loss):
+            data_loss = torch.load(self.path_loss)
+            self.best_train_loss = data_loss["loss"]
+
         data_last = torch.load(self.path_last)
-        data_acc = torch.load(self.path_acc)
-        data_loss = torch.load(self.path_loss)
-        self.best_train_loss = data_loss["loss"]
-        self.best_train_acc = data_acc["acc"]
 
         if choice == 'acc':
             print('Load NN: acc')
@@ -106,8 +131,12 @@ class State():
             data = data_last
 
         self.epoch = data["epoch"]
-        self.model.load_state_dict(data["model"])
-        self.optimizer.load_state_dict(data["optimizer"])
+
+        if self.model:
+            self.model.load_state_dict(data["model"])
+
+        if self.optimizer:
+            self.optimizer.load_state_dict(data["optimizer"])
 
         print('self.args.force_lr', self.args.force_lr)
 
@@ -124,10 +153,11 @@ class State():
         epoch = self.history_train["epoch"][-1]
         loss = self.history_train["loss"][-1]
         acc = self.history_train["accuracy"][-1]
+        lr = self.history_train["lr"][-1]
         passed = batch_id * batch_len
         progress = math.floor(passed/dataset_len * 100)
 
-        print(f'Train Epoch: {epoch}\t [{passed}/{dataset_len} {progress}%]\t Loss: {loss:.6f} Acc: [{correct}/{batch_len} {acc:.3f}%]')
+        print(f'Train Epoch: {epoch}\t LR:{lr}\t [{passed}/{dataset_len} {progress}%]\t Loss: {loss:.6f} Acc: [{correct}/{batch_len} {acc:.3f}%]')
 
         return self
 
