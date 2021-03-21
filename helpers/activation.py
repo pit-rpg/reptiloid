@@ -24,7 +24,7 @@ class SReptiloidReLU(nn.Module):
         # self.max_mul = torch.Tensor(-0.75, device=device)
 
     def forward(self, x):
-        return torch.where(x < 0.0, x * -0.05, torch.where(x > 1.0, x * -0.05, x))
+        return torch.where(x < 0.0, x * 0.01, torch.where(x > 2.0, x * 0.1, x))
         # return torch.where(x < self.min, x * self.min_mul, torch.where(x > self.max, x * self.max_mul, x))
 
 # class Linear(nn.Module):
