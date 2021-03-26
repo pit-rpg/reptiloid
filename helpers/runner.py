@@ -2,7 +2,12 @@ import argparse
 import torch
 import multiprocessing
 
-optionsDef = {
+DEFAULT_ARGS = {
+    "--name-suffix": {
+        "type": str,
+        "default": None,
+        "help": 'name suffix'
+    },
     "--batch-size": {
         "type": int,
         "default": 64,
@@ -115,16 +120,10 @@ def printInfo(args, device):
     print('-'*42)
 
 
-def getArgs(description: str = "Neural Network", defaults={}):
+def getArgs(description: str = "Neural Network"):
     parser = argparse.ArgumentParser(description=description)
 
-    for key, val in defaults.items():
-        if key not in optionsDef:
-            raise Exception('wrong option')
-        optionsDef[key].update({"default": val})
-        print(key, optionsDef[key])
-
-    for key, val in optionsDef.items():
-        parser.add_argument(key, **optionsDef[key])
+    for key, val in DEFAULT_ARGS.items():
+        parser.add_argument(key, **DEFAULT_ARGS[key])
 
     return parser.parse_args()
